@@ -7,5 +7,5 @@
     ```
   - cd to anywhere(such as '/home/**'), and copy test/step.py, exec
     ```bash
-    /home/***/.local/bin/swjob --pkg=step --target=/home/**
+    /home/***/.local/bin/swjob --function=evaluate_ppl --module=step --path=/home/**
     ```

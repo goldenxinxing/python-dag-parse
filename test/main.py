@@ -5,8 +5,8 @@
 import yaml
 from loguru import logger
 
-from src import decorator
-from src.ppl import Context
+from job import decorator
+from job.model import Context
 
 
 def print_hi(name):
@@ -25,25 +25,28 @@ if __name__ == '__main__':
     # generate DAG
     logger.debug("2.generator DAG")
     # check
-    all_steps = []
-    dependencies = []
-    for job in decorator.jobs.items():
+    checks = []
+    for job in decorator.JOBS.items():
+        all_steps = []
+        dependencies = []
         for step in job[1].items():
             all_steps.append(step[1].get_func())
             if step[1].get_dependency():
                 dependencies.append(step[1].get_dependency())
-    check = all(item in all_steps for item in dependencies)
-    if check:
-        logger.debug("check success! \n{}", yaml.dump(decorator.jobs))
-    else:
-        logger.error("check error")
+        _check = all(item in all_steps for item in dependencies)
+        if not _check:
+            logger.error("job:{} check error!", job[0])
+        checks.append(_check)
+    # all is ok
+    if all(c is True for c in checks):
+        logger.debug("check success! \n{}", yaml.dump(decorator.JOBS))
+
     # test decorator
     logger.debug("3.call function")
-    for job in decorator.jobs.items():
-        logger.debug("job:{0}", job[0])
+    for job in decorator.JOBS.items():
         # test decorator
         for step in job[1].items():
-            logger.debug("job:{}, function:{}, details:{}", job[0], step[0], step[1])
+            logger.debug("job is:{}, function:{}, details:{}", job[0], step[0], step[1])
             # test execute
             func = getattr(_module, step[0], None)
             _context = Context()

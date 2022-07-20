@@ -1,0 +1,34 @@
+default:
+  evaluate_cmp: !!python/object:src.decorator.Step
+    concurrency: false
+    concurrency_level: 1/2/3/4
+    dependency: evaluate_ppl
+    func_name: evaluate_cmp
+    job_name: default
+    resources: cpu=1
+    task_num: 2
+  evaluate_ppl: !!python/object:src.decorator.Step
+    concurrency: true
+    concurrency_level: 1/2/3/4
+    dependency: ''
+    func_name: evaluate_ppl
+    job_name: default
+    resources: gpu=1,cpu=2
+    task_num: 2
+second:
+  evaluate_cmp2: !!python/object:src.decorator.Step
+    concurrency: false
+    concurrency_level: 1/2/3/4
+    dependency: evaluate_ppl2
+    func_name: evaluate_cmp
+    job_name: second
+    resources: cpu=1
+    task_num: 2
+  evaluate_ppl2: !!python/object:src.decorator.Step
+    concurrency: true
+    concurrency_level: 1/2/3/4
+    dependency: ''
+    func_name: evaluate_ppl2
+    job_name: second
+    resources: gpu=1,cpu=2
+    task_num: 2

@@ -37,7 +37,7 @@ setup(
     install_requires=install_requires,
     entry_points="""
       [console_scripts]
-      swjob = src:parser
+      swjob = job:cli
       """,
     classifiers=[
         "Programming Language :: Python :: 3",

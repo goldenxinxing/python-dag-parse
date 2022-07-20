@@ -9,11 +9,4 @@ class Context:
         self.dataset_uri = dataset_uri
 
 
-class PipelineHandler(object):
-
-    def __init__(
-            self,
-            context: Context,
-    ) -> None:
-        self.context = context
 
