@@ -7,6 +7,7 @@ from loguru import logger
 
 from job import decorator
 from job.model import Context
+from job.dag import *
 
 
 def print_hi(name):
@@ -20,36 +21,15 @@ if __name__ == '__main__':
 
     # parse DAG
     logger.debug("1.parse DAG:")
-    _module = __import__("step")
+    jobs = parse_job_from_module("step-class", "./")
 
     # generate DAG
     logger.debug("2.generator DAG")
-    # check
-    checks = []
-    for job in decorator.JOBS.items():
-        all_steps = []
-        dependencies = []
-        for step in job[1].items():
-            all_steps.append(step[1].get_func())
-            if step[1].get_dependency():
-                dependencies.append(step[1].get_dependency())
-        _check = all(item in all_steps for item in dependencies)
-        if not _check:
-            logger.error("job:{} check error!", job[0])
-        checks.append(_check)
-    # all is ok
-    if all(c is True for c in checks):
-        logger.debug("check success! \n{}", yaml.dump(decorator.JOBS))
+    generate_job_yaml("step-class", "./", "./")
 
     # test decorator
     logger.debug("3.call function")
-    for job in decorator.JOBS.items():
-        # test decorator
-        for step in job[1].items():
-            logger.debug("job is:{}, function:{}, details:{}", job[0], step[0], step[1])
-            # test execute
-            func = getattr(_module, step[0], None)
-            _context = Context()
-            func(_context)
+    call_function("TestStep.evaluate_ppl2", "step-class", "./")
+
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

@@ -1,0 +1,34 @@
+default-2:
+  TestStep.evaluate_cmp: !!python/object:job.dag.Step
+    concurrency: false
+    concurrency_level: '1'
+    dependency: TestStep.evaluate_ppl
+    func_name: TestStep.evaluate_cmp
+    job_name: default-2
+    resources: cpu=1
+    task_num: 2
+  TestStep.evaluate_ppl: !!python/object:job.dag.Step
+    concurrency: true
+    concurrency_level: 1/2/3/4
+    dependency: ''
+    func_name: TestStep.evaluate_ppl
+    job_name: default-2
+    resources: gpu=1,cpu=2
+    task_num: 2
+second-2:
+  TestStep.evaluate_cmp2: !!python/object:job.dag.Step
+    concurrency: false
+    concurrency_level: '1'
+    dependency: TestStep.evaluate_ppl2
+    func_name: TestStep.evaluate_cmp2
+    job_name: second-2
+    resources: cpu=1
+    task_num: 2
+  TestStep.evaluate_ppl2: !!python/object:job.dag.Step
+    concurrency: true
+    concurrency_level: 1/2/3/4
+    dependency: ''
+    func_name: TestStep.evaluate_ppl2
+    job_name: second-2
+    resources: gpu=1,cpu=2
+    task_num: 2

@@ -1,3 +1,4 @@
+
 import importlib
 import sys
 from pathlib import Path
@@ -5,11 +6,9 @@ from pathlib import Path
 import pkg_resources
 import yaml
 from loguru import logger
+import typing as t
 
 from job.model import Context
-
-# not thread safe
-JOBS = {}
 
 
 class Step:
@@ -39,23 +38,57 @@ class Step:
         return self.dependency
 
 
-def parse_from_module(module: str, path: str):
+# not thread safe
+parse_config = {
+    "parse_stage": False,
+    "jobs": {}
+}
+
+
+def set_parse_stage(parse_stage: bool):
+    parse_config["parse_stage"] = parse_stage
+
+
+def is_parse_stage():
+    return parse_config["parse_stage"]
+
+
+def add_job(job_name: str, step: Step) -> None:
+    parse_config["jobs"].setdefault(job_name, {})
+
+    logger.debug(step)
+    parse_config["jobs"][job_name][step.get_func()] = step
+
+
+def get_jobs():
+    return parse_config["jobs"]
+
+# load is unique,so don't need to think multi load and clean
+# def clear_config():
+#     global parse_config
+#     parse_config = {
+#         "parse_stage": False,
+#         "jobs": {}
+#     }
+
+
+def parse_job_from_module(module: str, path: str):
     """
     parse @step from module
     :param module: module name
     :param path: abs path
     :return: jobs
     """
-    global JOBS
+    set_parse_stage(True)
     # parse DAG
     logger.debug("parse @step for module:{}", module)
     load_module(module, path)
-    _jobs = JOBS
-    JOBS = {}
+    _jobs = get_jobs()
+
     return _jobs
 
 
-def generate_job_yaml(module: str, path: str, target_dir: str):
+def generate_job_yaml(module: str, path: str, target_dir: str) -> None:
     """
     generate job yaml
     :param target_dir: yaml target path
@@ -63,12 +96,22 @@ def generate_job_yaml(module: str, path: str, target_dir: str):
     :param path: abs path
     :return: None
     """
-    _jobs = parse_from_module(module, path)
+    _jobs = parse_job_from_module(module, path)
     # generate DAG
     logger.debug("generator DAG")
+    if check(_jobs):
+        # dump to target
+        with open(target_dir + '/jobs.yaml', 'w') as file:
+            yaml.dump(_jobs, file)
+        logger.debug("generator DAG success!")
+    else:
+        logger.error("generator DAG error! reason:{}", "check is failed.")
+
+
+def check(jobs: dict) -> bool:
     # check
     checks = []
-    for job in _jobs.items():
+    for job in jobs.items():
         all_steps = []
         dependencies = []
         for step in job[1].items():
@@ -81,27 +124,37 @@ def generate_job_yaml(module: str, path: str, target_dir: str):
         checks.append(_check)
     # all is ok
     if all(c is True for c in checks):
-        logger.debug("check success! \n{}", yaml.dump(_jobs))
-    # todo dump to target
-    with open(target_dir + '/jobs.yaml', 'w') as file:
-        yaml.dump(_jobs, file)
+        logger.debug("check success! \n{}", yaml.dump(jobs))
+        return True
+    else:
+        return False
 
 
-def call_function(function: str, module: str, path: str):
+def call_function(step_name: str, module: str, path: str) -> t.Any:
     """
     call function from module
-    :param function: function name
+    :param step_name: step name
     :param module: module name
     :param path: abs path
     :return: function results
     """
-    logger.debug("call function:{}", function)
+    logger.debug("call function:{}", step_name)
 
     _module = load_module(module, path)
 
-    # test execute
-    func = getattr(_module, function, None)
+    # todo instance by actual param
     _context = Context()
+    # test execute
+    if "." in step_name:
+        _cls_name, _func_name = step_name.split(".")
+        _cls = getattr(_module, _cls_name, None)
+        # need an instance
+        cls = _cls()
+        func = getattr(cls, _func_name, None)
+    else:
+        _func_name = step_name
+        func = getattr(_module, _func_name, None)
+
     return func(_context)
 
 

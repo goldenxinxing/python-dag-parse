@@ -1,7 +1,7 @@
 from loguru import logger
 
 from job.dag import Step
-from job.dag import JOBS
+from job.dag import is_parse_stage, add_job
 
 
 def step(
@@ -12,15 +12,10 @@ def step(
         task_num: int = 2,
         dependency: str = ""):
     def decorator(func):
-        __func_name = func.__qualname__
+        if is_parse_stage():
+            _step = Step(job_name, func.__qualname__, resources, concurrency, concurrency_level, task_num, dependency)
+            add_job(job_name, _step)
 
-        JOBS.setdefault(job_name, {})
-        job = JOBS[job_name]
-
-        _step = Step(job_name, __func_name, resources, concurrency, concurrency_level, task_num, dependency)
-
-        logger.debug(_step)
-        job[__func_name] = _step
         return func
 
     return decorator
