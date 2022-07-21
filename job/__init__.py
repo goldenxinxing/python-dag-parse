@@ -1,14 +1,9 @@
-import importlib
-import sys
-from pathlib import Path
-
-import pkg_resources
 from loguru import logger
 
 import click
 
 from job import decorator
-from job.dag import call_function
+from job.dag import call_function, parse_job_from_yaml
 from job.dag import generate_job_yaml
 from job.model import Context
 
@@ -40,6 +35,15 @@ def parser(function: str, module: str, path: str):
     print("result:{}".format(res))
 
 
+@click.command("run")
+@click.option("--file", help="job yaml file.")
+def run(file: str):
+    # parse DAG
+    logger.debug("run job from yaml")
+    res = parse_job_from_yaml(file)
+    print("result:\n{}".format(res))
+
+
 def create_cli() -> click.core.Group:
     @click.group()
     @click.version_option(version=__version__)
@@ -49,6 +53,7 @@ def create_cli() -> click.core.Group:
 
     cli_group.add_command(parser)
     cli_group.add_command(generator)
+    cli_group.add_command(run)
 
     return cli_group
 

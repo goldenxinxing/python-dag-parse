@@ -31,5 +31,8 @@ if __name__ == '__main__':
     logger.debug("3.call function")
     call_function("TestStep.evaluate_ppl2", "step-class", "./")
 
+    logger.debug("4.parse yaml for job run")
+    res = parse_job_from_yaml("jobs.yaml")
+    logger.debug("yaml result:\n{}", res)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

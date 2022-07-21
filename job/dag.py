@@ -130,6 +130,11 @@ def check(jobs: dict) -> bool:
         return False
 
 
+def parse_job_from_yaml(path: str) -> dict:
+    with open(path, 'r') as file:
+        return yaml.unsafe_load(file)
+
+
 def call_function(step_name: str, module: str, path: str) -> t.Any:
     """
     call function from module
