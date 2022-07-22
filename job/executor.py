@@ -11,10 +11,10 @@ from job.model import STATUS
 class Scheduler:
     def __init__(self, steps: dict[Step]):
         self.steps = steps
-        self.__split_steps()
+        self.__split_tasks()
         self._lock = threading.RLock()
 
-    def __split_steps(self):
+    def __split_tasks(self):
         for item in self.steps.items():
             _step = item[1]
             # update step status = init
@@ -41,6 +41,7 @@ class Scheduler:
                 if all(d in _finished_step_names for d in wait.dependency if d):
                     executor = Executor(self, wait)
                     executor.start()
+                    # executor.setDaemon()
                     _threads.append(executor)
 
         for t in _threads:
@@ -64,11 +65,10 @@ class Executor(threading.Thread):
                 self.step.status = STATUS.SUCCESS
             else:
                 self.step.status = STATUS.FAILED
-        # trigger schedule
-        self.scheduler.schedule()
 
         end_time = time.time()
         logger.debug("step:{} finished, status:{}, run time:{}",
                      self.step.step_name, self.step.status, end_time - start_time)
-
+        # trigger next schedule
+        self.scheduler.schedule()
 
