@@ -8,35 +8,7 @@ import yaml
 from loguru import logger
 import typing as t
 
-from job.model import Context
-
-
-class Step:
-    def __init__(self,
-                 job_name: str,
-                 func_name: str,
-                 resources: str = "cpu=1",
-                 concurrency: bool = False,
-                 concurrency_level: str = "1",
-                 task_num: int = 1,
-                 dependency: str = ""):
-        self.job_name = job_name
-        self.func_name = func_name
-        self.resources = resources
-        self.concurrency = concurrency
-        self.concurrency_level = concurrency_level
-        self.task_num = task_num
-        self.dependency = dependency
-
-    def __repr__(self):
-        return "name:{0},dependency:{1}".format(self.func_name, self.dependency)
-
-    def get_func(self):
-        return self.func_name
-
-    def get_dependency(self):
-        return self.dependency
-
+from job.model import Context, Step, STATUS, Task
 
 # not thread safe
 parse_config = {
@@ -57,7 +29,7 @@ def add_job(job_name: str, step: Step) -> None:
     parse_config["jobs"].setdefault(job_name, {})
 
     logger.debug(step)
-    parse_config["jobs"][job_name][step.get_func()] = step
+    parse_config["jobs"][job_name][step.step_name] = step
 
 
 def get_jobs():
@@ -108,16 +80,18 @@ def generate_job_yaml(module: str, path: str, target_dir: str) -> None:
         logger.error("generator DAG error! reason:{}", "check is failed.")
 
 
-def check(jobs: dict) -> bool:
+def check(jobs: dict[str, dict[str, Step]]) -> bool:
     # check
     checks = []
     for job in jobs.items():
         all_steps = []
         dependencies = []
-        for step in job[1].items():
-            all_steps.append(step[1].get_func())
-            if step[1].get_dependency():
-                dependencies.append(step[1].get_dependency())
+        for item in job[1].items():
+            step = item[1]
+            all_steps.append(step.step_name)
+            for d in step.dependency:
+                if d:
+                    dependencies.append(d)
         _check = all(item in all_steps for item in dependencies)
         if not _check:
             logger.error("job:{} check error!", job[0])
@@ -135,9 +109,10 @@ def parse_job_from_yaml(path: str) -> dict:
         return yaml.unsafe_load(file)
 
 
-def call_function(step_name: str, module: str, path: str) -> t.Any:
+def call_function(step_name: str, module: str, path: str, task: Task) -> bool:
     """
     call function from module
+    :param task: task info
     :param step_name: step name
     :param module: module name
     :param path: abs path
@@ -147,8 +122,6 @@ def call_function(step_name: str, module: str, path: str) -> t.Any:
 
     _module = load_module(module, path)
 
-    # todo instance by actual param
-    _context = Context()
     # test execute
     if "." in step_name:
         _cls_name, _func_name = step_name.split(".")
@@ -160,7 +133,15 @@ def call_function(step_name: str, module: str, path: str) -> t.Any:
         _func_name = step_name
         func = getattr(_module, _func_name, None)
 
-    return func(_context)
+    try:
+        task.status = STATUS.RUNNING
+        func(task.context)
+    except RuntimeError:
+        task.status = STATUS.FAILED
+        return False
+    else:
+        task.status = STATUS.SUCCESS
+        return True
 
 
 def load_module(module: str, path: str):

@@ -5,7 +5,8 @@ import click
 from job import decorator
 from job.dag import call_function, parse_job_from_yaml
 from job.dag import generate_job_yaml
-from job.model import Context
+from job.executor import Scheduler
+from job.model import Context, Task, STATUS
 
 __version__ = "0.0.1"
 
@@ -31,17 +32,22 @@ def generator(module: str, path: str):
 def parser(function: str, module: str, path: str):
     # parse DAG
     logger.debug("call function")
-    res = call_function(function, module, path)
+    res = call_function(function, module, path, Task(Context(), STATUS.INIT))
     print("result:{}".format(res))
 
 
 @click.command("run")
 @click.option("--file", help="job yaml file.")
-def run(file: str):
+@click.option("--job", default="default", help="job to run.")
+def run(file: str, job: str):
     # parse DAG
     logger.debug("run job from yaml")
-    res = parse_job_from_yaml(file)
-    print("result:\n{}".format(res))
+    _jobs = parse_job_from_yaml(file)
+    # steps of job
+    _steps = _jobs[job]
+    scheduler = Scheduler(_steps)
+    scheduler.schedule()
+    print("result:\n{}".format(_jobs))
 
 
 def create_cli() -> click.core.Group:

@@ -2,11 +2,8 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-import yaml
-from loguru import logger
 
-from job import decorator
-from job.model import Context
+from job import Scheduler
 from job.dag import *
 
 
@@ -29,10 +26,19 @@ if __name__ == '__main__':
 
     # test decorator
     logger.debug("3.call function")
-    call_function("TestStep.evaluate_ppl2", "step-class", "./")
+    call_function("TestStep.evaluate_ppl2", "step-class", "./", Task(Context(), STATUS.INIT))
 
     logger.debug("4.parse yaml for job run")
-    res = parse_job_from_yaml("jobs.yaml")
-    logger.debug("yaml result:\n{}", res)
+
+    _jobs = parse_job_from_yaml("jobs.yaml")
+    logger.debug("yaml result:\n{}", _jobs)
+
+    # steps of job
+    logger.debug("5.run job")
+
+    _steps = _jobs["default-2"]
+    scheduler = Scheduler(_steps)
+    scheduler.schedule()
+
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

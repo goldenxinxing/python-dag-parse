@@ -1,34 +1,60 @@
 default-2:
-  TestStep.evaluate_cmp: !!python/object:job.dag.Step
-    concurrency: false
-    concurrency_level: '1'
-    dependency: TestStep.evaluate_ppl
-    func_name: TestStep.evaluate_cmp
+  TestStep.evaluate_cmp: !!python/object:job.model.Step
+    concurrency: 2
+    dependency:
+    - TestStep.evaluate_ppl
+    - TestStep.evaluate_ppl1
     job_name: default-2
-    resources: cpu=1
+    resources:
+    - cpu=1
+    status: ''
+    step_name: TestStep.evaluate_cmp
     task_num: 2
-  TestStep.evaluate_ppl: !!python/object:job.dag.Step
-    concurrency: true
-    concurrency_level: 1/2/3/4
-    dependency: ''
-    func_name: TestStep.evaluate_ppl
+    tasks: []
+  TestStep.evaluate_ppl: !!python/object:job.model.Step
+    concurrency: 2
+    dependency:
+    - ''
     job_name: default-2
-    resources: gpu=1,cpu=2
+    resources:
+    - gpu=1
+    - cpu=2
+    status: ''
+    step_name: TestStep.evaluate_ppl
     task_num: 2
+    tasks: []
+  TestStep.evaluate_ppl1: !!python/object:job.model.Step
+    concurrency: 2
+    dependency:
+    - ''
+    job_name: default-2
+    resources:
+    - cpu=1
+    status: ''
+    step_name: TestStep.evaluate_ppl1
+    task_num: 2
+    tasks: []
 second-2:
-  TestStep.evaluate_cmp2: !!python/object:job.dag.Step
-    concurrency: false
-    concurrency_level: '1'
-    dependency: TestStep.evaluate_ppl2
-    func_name: TestStep.evaluate_cmp2
+  TestStep.evaluate_cmp2: !!python/object:job.model.Step
+    concurrency: 1
+    dependency:
+    - TestStep.evaluate_ppl2
     job_name: second-2
-    resources: cpu=1
+    resources:
+    - cpu=1
+    status: ''
+    step_name: TestStep.evaluate_cmp2
     task_num: 2
-  TestStep.evaluate_ppl2: !!python/object:job.dag.Step
-    concurrency: true
-    concurrency_level: 1/2/3/4
-    dependency: ''
-    func_name: TestStep.evaluate_ppl2
+    tasks: []
+  TestStep.evaluate_ppl2: !!python/object:job.model.Step
+    concurrency: 1
+    dependency:
+    - ''
     job_name: second-2
-    resources: gpu=1,cpu=2
+    resources:
+    - gpu=1
+    - cpu=2
+    status: ''
+    step_name: TestStep.evaluate_ppl2
     task_num: 2
+    tasks: []
