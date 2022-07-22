@@ -59,6 +59,7 @@ class Executor(threading.Thread):
         # processing pool
         start_time = time.time()
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.step.concurrency) as executor:
+            # todo custom module and path
             futures = [executor.submit(call_function, self.step.step_name, "step-class", "./", task)
                        for task in self.step.tasks]
             if all(future.result() for future in concurrent.futures.as_completed(futures)):
