@@ -5,9 +5,9 @@ from job.dag import is_parse_stage, add_job
 
 def step(
         job_name: str = "default",
-        resources: str = "gpu=1,cpu=2",
+        resources: str = "cpu=1",
         concurrency: int = 1,
-        task_num: int = 2,
+        task_num: int = 1,
         dependency: str = ""):
     def decorator(func):
         if is_parse_stage():

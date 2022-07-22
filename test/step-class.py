@@ -12,24 +12,23 @@ class TestStep:
         job_name='default-2',
         resources="gpu=1,cpu=2",
         concurrency=2,
-        task_num=2
+        task_num=6
     )
     def evaluate_ppl(self, _context: Context):
         """
         step 'ppl' demo
         :param _context: common param
         """
-        logger.debug("thread:{}, test ppl start", threading.currentThread().getName())
+        logger.debug("thread:{}, test ppl start, index:{}", threading.currentThread().getName(), _context.index)
         time.sleep(1)
-        raise RuntimeError("test error in ppl")
-        # logger.debug("thread:{}, test ppl end", threading.currentThread().getName())
+        # raise RuntimeError("test error in ppl")
+        logger.debug("thread:{}, test ppl end, index:{}", threading.currentThread().getName(), _context.index)
         # store.set(f"xxx/{context['id']}")
         # return {'eval_res': results, 'label': label}
 
     @step(
         job_name='default-2',
         resources="cpu=1",
-        concurrency=2,
         dependency=''
     )
     def evaluate_ppl1(self, _context: Context):
@@ -37,14 +36,13 @@ class TestStep:
             step 'cmp' demo
             :param _context: common param
             """
-        logger.debug("thread:{}, test ppl1 start", threading.currentThread().getName())
+        logger.debug("thread:{}, test ppl1 start, index:{}", threading.currentThread().getName(), _context.index)
         time.sleep(1)
-        logger.debug("thread:{}, test ppl1 end", threading.currentThread().getName())
+        logger.debug("thread:{}, test ppl1 end, index:{}", threading.currentThread().getName(), _context.index)
 
     @step(
         job_name='default-2',
         resources="cpu=1",
-        concurrency=2,
         dependency='TestStep.evaluate_ppl,TestStep.evaluate_ppl1'
     )
     def evaluate_cmp(self, _context: Context):
@@ -52,9 +50,23 @@ class TestStep:
             step 'cmp' demo
             :param _context: common param
             """
-        logger.debug("thread:{}, test cmp start", threading.currentThread().getName())
+        logger.debug("thread:{}, test cmp start, index:{}", threading.currentThread().getName(), _context.index)
         time.sleep(1)
-        logger.debug("thread:{}, test cmp end", threading.currentThread().getName())
+        logger.debug("thread:{}, test cmp end, index:{}", threading.currentThread().getName(), _context.index)
+
+    @step(
+        job_name='default-2',
+        resources="cpu=1",
+        dependency='TestStep.evaluate_cmp'
+    )
+    def evaluate_final(self, _context: Context):
+        """
+            step 'cmp' demo
+            :param _context: common param
+            """
+        logger.debug("thread:{}, test final start, index:{}", threading.currentThread().getName(), _context.index)
+        time.sleep(1)
+        logger.debug("thread:{}, test final end, index:{}", threading.currentThread().getName(), _context.index)
 
     @step(
         job_name='second-2',
