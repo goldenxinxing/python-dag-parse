@@ -138,6 +138,7 @@ def call_function(step_name: str, module: str, path: str, task: Task) -> bool:
         func(task.context)
     except RuntimeError:
         task.status = STATUS.FAILED
+        logger.error("call step:{} error", step_name)
         return False
     else:
         task.status = STATUS.SUCCESS

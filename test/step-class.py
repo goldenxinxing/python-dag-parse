@@ -21,7 +21,8 @@ class TestStep:
         """
         logger.debug("thread:{}, test ppl start", threading.currentThread().getName())
         time.sleep(1)
-        logger.debug("thread:{}, test ppl end", threading.currentThread().getName())
+        raise RuntimeError("test error in ppl")
+        # logger.debug("thread:{}, test ppl end", threading.currentThread().getName())
         # store.set(f"xxx/{context['id']}")
         # return {'eval_res': results, 'label': label}
 
