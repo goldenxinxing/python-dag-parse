@@ -4,8 +4,7 @@ import time
 
 from loguru import logger
 
-from job.dag import Step, call_function
-from job.model import STATUS
+from job.model import STATUS, Step
 
 
 class Scheduler:
@@ -28,18 +27,18 @@ class Scheduler:
             _wait_steps = []
             _finished_step_names = []
             for item in self.steps.items():
-                step = item[1]
-                if step.status is STATUS.FAILED:
+                _step = item[1]
+                if _step.status is STATUS.FAILED:
                     # todo break processing
                     pass
-                if step.status is STATUS.SUCCESS:
-                    _finished_step_names.append(step.step_name)
-                if step.status is STATUS.INIT:
-                    _wait_steps.append(step)
+                if _step.status is STATUS.SUCCESS:
+                    _finished_step_names.append(_step.step_name)
+                if _step.status is STATUS.INIT:
+                    _wait_steps.append(_step)
             # judge whether a step's dependency all in finished
-            for wait in _wait_steps:
-                if all(d in _finished_step_names for d in wait.dependency if d):
-                    executor = Executor(self, wait)
+            for _wait in _wait_steps:
+                if all(d in _finished_step_names for d in _wait.dependency if d):
+                    executor = Executor(self, _wait)
                     executor.start()
                     # executor.setDaemon()
                     _threads.append(executor)
@@ -60,7 +59,7 @@ class Executor(threading.Thread):
         start_time = time.time()
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.step.concurrency) as executor:
             # todo custom module and path
-            futures = [executor.submit(call_function, self.step.step_name, "step-class", "./", task)
+            futures = [executor.submit(task.execute, "step-class", "./")
                        for task in self.step.tasks]
             if all(future.result() for future in concurrent.futures.as_completed(futures)):
                 self.step.status = STATUS.SUCCESS
@@ -68,8 +67,8 @@ class Executor(threading.Thread):
                 self.step.status = STATUS.FAILED
 
         end_time = time.time()
-        logger.debug("step:{} finished, status:{}, run time:{}",
-                     self.step.step_name, self.step.status, end_time - start_time)
+        logger.debug("step:{} finished, run time:{}",
+                     self.step, end_time - start_time)
         # trigger next schedule
         self.scheduler.schedule()
 

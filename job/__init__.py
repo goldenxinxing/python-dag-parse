@@ -3,10 +3,8 @@ from loguru import logger
 import click
 
 from job import decorator
-from job.dag import call_function, parse_job_from_yaml
-from job.dag import generate_job_yaml
 from job.executor import Scheduler
-from job.model import Context, Task, STATUS
+from job.model import Context, Task, STATUS, Parser, JobDAG
 
 __version__ = "0.0.1"
 
@@ -22,17 +20,18 @@ def print_hi(name):
 def generator(module: str, path: str):
     # parse DAG
     logger.debug("generator DAG")
-    generate_job_yaml(module, path, path)
+    JobDAG.generate_job_yaml(module, path, path)
 
 
-@click.command("call")
-@click.option("--function", help="call function.")
+@click.command("exec")
+@click.option("--step", help="call step.")
 @click.option("--module", help="scan modules.")
 @click.option("--path", help="scan path.")
-def parser(function: str, module: str, path: str):
+def parser(step: str, module: str, path: str):
     # parse DAG
-    logger.debug("call function")
-    res = call_function(function, module, path, Task(Context(), STATUS.INIT))
+    logger.debug("execute step")
+    _task = Task(Context(step=step, total=1, index=0), STATUS.INIT)
+    res = _task.execute(module, path)
     print("result:{}".format(res))
 
 
@@ -42,12 +41,12 @@ def parser(function: str, module: str, path: str):
 def run(file: str, job: str):
     # parse DAG
     logger.debug("run job from yaml")
-    _jobs = parse_job_from_yaml(file)
+    _jobs = JobDAG.parse_job_from_yaml(file)
     # steps of job
     _steps = _jobs[job]
     scheduler = Scheduler(_steps)
     scheduler.schedule()
-    print("result:\n{}".format(_jobs))
+    print("jobs:\n{}".format(_jobs))
 
 
 def create_cli() -> click.core.Group:

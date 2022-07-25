@@ -1,6 +1,5 @@
 
-from job.dag import Step
-from job.dag import is_parse_stage, add_job
+from job.model import Parser, Step
 
 
 def step(
@@ -10,9 +9,9 @@ def step(
         task_num: int = 1,
         dependency: str = ""):
     def decorator(func):
-        if is_parse_stage():
+        if Parser.is_parse_stage():
             _step = Step(job_name, func.__qualname__, resources, concurrency, task_num, dependency)
-            add_job(job_name, _step)
+            Parser.add_job(job_name, _step)
 
         return func
 
